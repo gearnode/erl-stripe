@@ -22,6 +22,7 @@
     stdlib,
     syntax_tools,
     uri,
+    mhttp,
     json,
     jsv]},
   {env, []},

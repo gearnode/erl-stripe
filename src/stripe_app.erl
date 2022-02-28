@@ -54,4 +54,4 @@ unregister_jsv_catalogs() ->
 
 -spec catalogs() -> [{jsv:catalog_name(), jsv:catalog()}].
 catalogs() ->
-  [].
+  [{stripe, stripe_jsv:catalog()}].

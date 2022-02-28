@@ -16,7 +16,6 @@
  [{description, "An Erlang client for Stripe API."},
   {vsn, "git"},
   {registered, []},
-  {mod, {stripe_app, []}},
   {applications,
    [kernel,
     stdlib,

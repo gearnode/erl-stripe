@@ -12,20 +12,17 @@
 %% ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR
 %% IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
-{application, stripe,
- [{description, "An Erlang client for Stripe API."},
-  {vsn, "git"},
-  {registered,
-   [stripe_sup]},
-  {mod, {stripe_app, []}},
-  {applications,
-   [kernel,
-    stdlib,
-    core,
-    syntax_tools,
-    uri,
-    mhttp,
-    json,
-    jsv]},
-  {env, []},
-  {modules, []}]}.
+-module(stripe_sup).
+
+-behaviour(c_sup).
+
+-export([start_link/0]).
+-export([children/0]).
+
+-spec start_link() -> c_sup:start_ret().
+start_link() ->
+  c_sup:start_link({local, ?MODULE}, ?MODULE, #{}).
+
+-spec children() -> c_sup:child_specs().
+children() ->
+  [].

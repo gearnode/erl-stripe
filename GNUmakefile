@@ -1,4 +1,4 @@
-all: openapi dialyzer test
+all: dialyzer test
 
 openapi:
 	QUIET=1 rebar3 openapi generate

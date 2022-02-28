@@ -19,7 +19,39 @@
 -export([start/2, stop/1]).
 
 start(_StartType, _Args) ->
-  stripe_sup:start_link().
+  try
+    register_jsv_catalogs(),
+    stripe_sup:start_link()
+  catch
+    throw:{error, Reason} ->
+      {error, Reason}
+  end.
 
 stop(_State) ->
-  ok.
+  unregister_jsv_catalogs().
+
+-spec register_jsv_catalogs() -> ok.
+register_jsv_catalogs() ->
+  Catalogs = catalogs(),
+  lists:foreach(fun ({Name, Catalog}) ->
+                    jsv:register_catalog(Name, Catalog)
+                end, Catalogs),
+  lists:foreach(fun ({Name, _}) ->
+                    case jsv:verify_catalog(Name, #{}) of
+                      ok ->
+                        ok;
+                      {error, Reason} ->
+                        throw({error, {invalid_jsv_catalog, Reason, Name}})
+                    end
+                end, Catalogs).
+
+-spec unregister_jsv_catalogs() -> ok.
+unregister_jsv_catalogs() ->
+  Catalogs = catalogs(),
+  lists:foreach(fun ({Name, _}) ->
+                    jsv:unregister_catalog(Name)
+                end, Catalogs).
+
+-spec catalogs() -> [{jsv:catalog_name(), jsv:catalog()}].
+catalogs() ->
+  [].

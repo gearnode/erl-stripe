@@ -1,6 +1,6 @@
 all: dialyzer test
 
-openapi:
+generate:
 	QUIET=1 rebar3 openapi generate
 
 dialyzer:
@@ -19,4 +19,4 @@ cover:
 clean:
 	$(RM) -r _build
 
-.PHONY: all openapi dialyzer build test cover clean
+.PHONY: all generate dialyzer build test cover clean

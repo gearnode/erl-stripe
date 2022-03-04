@@ -13,3 +13,26 @@
 %% IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 -module(stripe).
+
+-export([format_error_reason/1]).
+
+-export_type([result/0, result/1, error_reason/0]).
+
+-type result() :: ok | {error, error_reason()}.
+-type result(Result) :: {ok, Result} | {error, error_reason()}.
+
+-type error_reason() ::
+        missing_webhook_signature
+      | {invalid_webhook_signature, stripe_webhooks:signature_error_reason()}
+      | invalid_webhook_signature.
+
+-spec format_error_reason(error_reason()) -> unicode:chardata().
+format_error_reason(missing_webhook_signature) ->
+  <<"missing webhook signature">>;
+format_error_reason({invalid_webhook_signature, Reason}) ->
+  io_lib:format(<<"invalid webhook signature: ~ts">>,
+                [stripe_webhooks:format_signature_error_reason(Reason)]);
+format_error_reason(invalid_webhook_signature) ->
+  <<"invalid webhook signature">>;
+format_error_reason(Reason) ->
+  io_lib:format("~0tp", [Reason]).

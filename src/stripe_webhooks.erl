@@ -14,29 +14,61 @@
 
 -module(stripe_webhooks).
 
--export([parse_signature/1]).
+-export([validate_request/2, parse_signature/1,
+         format_signature_error_reason/1]).
 
--export_type([signature/0, result/1, error_reason/0]).
+-export_type([signature/0, signature_result/1, signature_error_reason/0]).
 
 -type signature() ::
         #{t := integer(),
           v1 := binary()}.
 
--type result(Result) :: {ok, Result} | {error, error_reason()}.
+-type signature_result(Result) ::
+        {ok, Result} | {error, signature_error_reason()}.
 
--type error_reason() ::
+-type signature_error_reason() ::
         invalid_format
       | {missing_field, atom()}
       | invalid_timestamp
       | invalid_v1_hmac.
 
+-spec validate_request(mhttp:request(), binary()) -> stripe:result().
+validate_request(Request, Secret) ->
+  Header = mhttp_request:header(Request),
+  case mhttp_header:find(Header, <<"Stripe-Signature">>) of
+    {ok, Value} ->
+      case parse_signature(Value) of
+        {ok, Signature} ->
+          validate_request(Request, Signature, Secret);
+        {error, Reason} ->
+          {error, {invalid_webhook_signature, Reason}}
+      end;
+    error ->
+      {error, missing_webhook_signature}
+  end.
 
--spec parse_signature(binary()) -> result(signature()).
+-spec validate_request(mhttp:request(), signature(), binary()) ->
+        stripe:result().
+validate_request(Request, #{t := Timestamp, v1 := ExpectedHMAC}, Secret) ->
+  Body = mhttp_request:body(Request),
+  Data = [integer_to_binary(Timestamp), $., Body],
+  HMAC0 = crypto:mac(hmac, sha256, Secret, Data),
+  HMAC = string:lowercase(binary:encode_hex(HMAC0)),
+  %% XXX Wait for OTP 25 to be able to use crypto:hash_equals/2.
+  if
+    HMAC =:= ExpectedHMAC ->
+      ok;
+    true ->
+      {error, invalid_webhook_signature}
+  end.
+
+-spec parse_signature(binary()) -> signature_result(signature()).
 parse_signature(String) ->
   Fields = binary:split(String, <<",">>, [global]),
   parse_signature_fields(Fields, #{}).
 
--spec parse_signature_fields([binary()], map()) -> result(signature()).
+-spec parse_signature_fields([binary()], map()) ->
+        signature_result(signature()).
 parse_signature_fields([], Signature) ->
   check_signature(Signature, [t, v1]);
 parse_signature_fields([Field | Fields], Signature) ->
@@ -61,7 +93,7 @@ parse_signature_fields([Field | Fields], Signature) ->
       {error, invalid_format}
   end.
 
--spec check_signature(map(), [atom()]) -> result(signature()).
+-spec check_signature(map(), [atom()]) -> signature_result(signature()).
 check_signature(Signature, []) ->
   {ok, Signature};
 check_signature(Signature, [Field | Fields]) ->
@@ -71,3 +103,16 @@ check_signature(Signature, [Field | Fields]) ->
     false ->
       {error, {missing_field, Field}}
   end.
+
+-spec format_signature_error_reason(signature_error_reason()) ->
+        unicode:chardata().
+format_signature_error_reason(invalid_format) ->
+  <<"invalid format">>;
+format_signature_error_reason({missing_field, Field}) ->
+  <<"missing field ", (atom_to_binary(Field))/binary>>;
+format_signature_error_reason(invalid_timestamp) ->
+  <<"invalid timestamp">>;
+format_signature_error_reason(invalid_v1_hmac) ->
+  <<"invalid v1 hmac">>;
+format_signature_error_reason(Reason) ->
+  io_lib:format("~0tp", [Reason]).

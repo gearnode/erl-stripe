@@ -25,7 +25,9 @@
         missing_webhook_signature
       | {invalid_webhook_signature, stripe_webhooks:signature_error_reason()}
       | invalid_webhook_signature
-      | invalid_webhook_timestamp.
+      | invalid_webhook_timestamp
+      | {invalid_event, {json, json:error()}}
+      | {invalid_event, {jsv, [jsv:value_error()]}}.
 
 -spec format_error_reason(error_reason()) -> unicode:chardata().
 format_error_reason(missing_webhook_signature) ->
@@ -37,5 +39,9 @@ format_error_reason(invalid_webhook_signature) ->
   <<"invalid webhook signature">>;
 format_error_reason(invalid_webhook_timestamp) ->
   <<"invalid webhook timestamp">>;
+format_error_reason({invalid_event, {json, Error}}) ->
+  io_lib:format(<<"invalid event: ~ts">>, [json:format_error(Error)]);
+format_error_reason({invalid_event, {jsv, Errors}}) ->
+  io_lib:format(<<"invalid event:~n~ts">>, [jsv:format_value_errors(Errors)]);
 format_error_reason(Reason) ->
   io_lib:format("~0tp", [Reason]).

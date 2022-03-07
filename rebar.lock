@@ -8,7 +8,7 @@
   0},
  {<<"jsv">>,
   {git,"https://github.com/exograd/erl-jsv.git",
-       {ref,"72e565df541d2e4f93012e9fb2409d37270d6db4"}},
+       {ref,"f283c911fcc9909529bd9a47532482d7d0b3f7af"}},
   0},
  {<<"ksuid">>,
   {git,"https://github.com/exograd/erl-ksuid.git",

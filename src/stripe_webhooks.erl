@@ -109,7 +109,7 @@ check_signature(Signature, [Field | Fields]) ->
       {error, {missing_field, Field}}
   end.
 
--spec parse_event(mhttp:request()) -> stripe:result(stripe_schemas:event()).
+-spec parse_event(mhttp:request()) -> stripe:result(stripe_model:event()).
 parse_event(Request) ->
   Body = mhttp_request:body(Request),
   case json:parse(Body) of

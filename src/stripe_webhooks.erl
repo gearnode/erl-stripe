@@ -54,12 +54,16 @@ validate_request(Request, #{t := Timestamp, v1 := ExpectedHMAC}, Secret) ->
   Data = [integer_to_binary(Timestamp), $., Body],
   HMAC0 = crypto:mac(hmac, sha256, Secret, Data),
   HMAC = string:lowercase(binary:encode_hex(HMAC0)),
+  Now = os:system_time(second),
+  TimestampDelta = abs(Now - Timestamp),
   %% XXX Wait for OTP 25 to be able to use crypto:hash_equals/2.
   if
-    HMAC =:= ExpectedHMAC ->
-      ok;
+    HMAC =/= ExpectedHMAC ->
+      {error, invalid_webhook_signature};
+    TimestampDelta > 60 ->
+      {error, invalid_webhook_timestamp};
     true ->
-      {error, invalid_webhook_signature}
+      ok
   end.
 
 -spec parse_signature(binary()) -> signature_result(signature()).

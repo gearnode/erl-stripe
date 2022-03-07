@@ -27,21 +27,31 @@
       | invalid_webhook_signature
       | invalid_webhook_timestamp
       | {invalid_event, {json, json:error()}}
-      | {invalid_event, {jsv, [jsv:value_error()]}}.
+      | {invalid_event, {jsv, [jsv:value_error()]}}
+      | {missing_event_object_name, binary()}
+      | {unknown_event_object_name, binary()}
+      | {invalid_event_object, {jsv, [jsv:value_error()]}}.
 
 -spec format_error_reason(error_reason()) -> unicode:chardata().
 format_error_reason(missing_webhook_signature) ->
-  <<"missing webhook signature">>;
+  "missing webhook signature";
 format_error_reason({invalid_webhook_signature, Reason}) ->
-  io_lib:format(<<"invalid webhook signature: ~ts">>,
+  io_lib:format("invalid webhook signature: ~ts",
                 [stripe_webhooks:format_signature_error_reason(Reason)]);
 format_error_reason(invalid_webhook_signature) ->
-  <<"invalid webhook signature">>;
+  "invalid webhook signature";
 format_error_reason(invalid_webhook_timestamp) ->
-  <<"invalid webhook timestamp">>;
+  "invalid webhook timestamp";
 format_error_reason({invalid_event, {json, Error}}) ->
-  io_lib:format(<<"invalid event: ~ts">>, [json:format_error(Error)]);
+  io_lib:format("invalid event: ~ts", [json:format_error(Error)]);
 format_error_reason({invalid_event, {jsv, Errors}}) ->
-  io_lib:format(<<"invalid event:~n~ts">>, [jsv:format_value_errors(Errors)]);
+  io_lib:format("invalid event:~n~ts", [jsv:format_value_errors(Errors)]);
+format_error_reason(missing_event_object_name) ->
+  "missing event object name";
+format_error_reason({unknown_event_object_name, Name}) ->
+  io_lib:format("unknown event object name '~ts'", [Name]);
+format_error_reason({invalid_event_object, {jsv, Errors}}) ->
+  io_lib:format("invalid event object:~n~ts",
+                [jsv:format_value_errors(Errors)]);
 format_error_reason(Reason) ->
   io_lib:format("~0tp", [Reason]).

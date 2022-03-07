@@ -15,7 +15,6 @@
 -module(stripe_webhooks).
 
 -export([validate_request/2, parse_signature/1,
-         parse_event/1,
          format_signature_error_reason/1]).
 
 -export_type([signature/0, signature_result/1, signature_error_reason/0]).
@@ -107,25 +106,6 @@ check_signature(Signature, [Field | Fields]) ->
       check_signature(Signature, Fields);
     false ->
       {error, {missing_field, Field}}
-  end.
-
--spec parse_event(mhttp:request()) -> stripe:result(stripe_model:event()).
-parse_event(Request) ->
-  Body = mhttp_request:body(Request),
-  case json:parse(Body) of
-    {ok, Value} ->
-      Options =
-        #{disable_verification => true,
-          unknown_member_handling => keep,
-          null_member_handling => remove},
-      case jsv:validate(Value, {ref, stripe, event}, Options) of
-        {ok, Event} ->
-          {ok, Event};
-        {error, Errors} ->
-          {error, {invalid_event, {jsv, Errors}}}
-      end;
-    {error, Error} ->
-      {error, {invalid_event, {json, Error}}}
   end.
 
 -spec format_signature_error_reason(signature_error_reason()) ->

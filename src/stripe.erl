@@ -16,7 +16,11 @@
 
 -export([format_error_reason/1]).
 
--export_type([result/0, result/1, error_reason/0]).
+-export_type([client_options/0, result/0, result/1, error_reason/0]).
+
+-type client_options() ::
+        #{mhttp_pool => mhttp:pool_id(),
+          api_key => binary()}.
 
 -type result() :: ok | {error, error_reason()}.
 -type result(Result) :: {ok, Result} | {error, error_reason()}.
@@ -30,7 +34,9 @@
       | {invalid_event, {jsv, [jsv:value_error()]}}
       | {missing_event_object_name, binary()}
       | {unknown_event_object_name, binary()}
-      | {invalid_event_object, {jsv, [jsv:value_error()]}}.
+      | {invalid_event_object, {jsv, [jsv:value_error()]}}
+      | {client_error, stripe_client:error()}
+      | {api_error, stripe_model:api_errors()}.
 
 -spec format_error_reason(error_reason()) -> unicode:chardata().
 format_error_reason(missing_webhook_signature) ->
@@ -53,5 +59,17 @@ format_error_reason({unknown_event_object_name, Name}) ->
 format_error_reason({invalid_event_object, {jsv, Errors}}) ->
   io_lib:format("invalid event object:~n~ts",
                 [jsv:format_value_errors(Errors)]);
+format_error_reason({client_error, #{reason := Reason}}) ->
+  %% TODO generate stripe_client:format_error_reason/1
+  io_lib:format("client error: ~tp", [Reason]);
+format_error_reason({api_error, Error}) ->
+  case Error of
+    #{code := Code, message := Message} ->
+      io_lib:format("api error ~ts: ~ts", [Code, Message]);
+    #{message := Message} ->
+      io_lib:format("api error: ~ts", [Message]);
+    #{type := Type} ->
+      io_lib:format("api error: ~tp", [Type])
+  end;
 format_error_reason(Reason) ->
   io_lib:format("~0tp", [Reason]).

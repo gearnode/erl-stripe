@@ -14,7 +14,7 @@
 
 -module(stripe_customers).
 
--export([create/2]).
+-export([create/2, delete/2]).
 
 -export_type([create_data/0]).
 
@@ -30,6 +30,20 @@ create(Data, ClientOptions) ->
     {ok, Customer, #{status := S}} when
         S >= 200, S < 300 ->
       {ok, Customer};
+    {ok, #{error := Error}, _} ->
+      {error, {api_error, Error}};
+    {error, Error} ->
+      {error, {client_error, Error}}
+  end.
+
+-spec delete(binary(), stripe:client_options()) -> stripe:result().
+delete(Id, ClientOptions) ->
+  ReqOptions = #{customer => Id},
+  ClientOptions2 = stripe_utils:client_options(ClientOptions),
+  case stripe_client:delete_customers_customer(ReqOptions, ClientOptions2) of
+    {ok, _, #{status := S}} when
+        S >= 200, S < 300 ->
+      ok;
     {ok, #{error := Error}, _} ->
       {error, {api_error, Error}};
     {error, Error} ->

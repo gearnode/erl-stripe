@@ -42,7 +42,7 @@ create(Data, ClientOptions) ->
 -spec update(binary(), update_data(), stripe:client_options()) ->
         stripe:result(stripe_model:customer()).
 update(Id, Data, ClientOptions) ->
-  ReqOptions = #{customer => Id,
+  ReqOptions = #{path => #{customer => Id},
                  body => {<<"application/x-www-form-urlencoded">>, Data}},
   ClientOptions2 = stripe_utils:client_options(ClientOptions),
   case stripe_client:post_customers_customer(ReqOptions, ClientOptions2) of
@@ -57,7 +57,7 @@ update(Id, Data, ClientOptions) ->
 
 -spec delete(binary(), stripe:client_options()) -> stripe:result().
 delete(Id, ClientOptions) ->
-  ReqOptions = #{customer => Id},
+  ReqOptions = #{path => #{customer => Id}},
   ClientOptions2 = stripe_utils:client_options(ClientOptions),
   case stripe_client:delete_customers_customer(ReqOptions, ClientOptions2) of
     {ok, _, #{status := S}} when

@@ -14,12 +14,15 @@
 
 -module(stripe_customers).
 
--export([create/2, delete/2]).
+-export([create/2, update/3, delete/2]).
 
--export_type([create_data/0]).
+-export_type([create_data/0, update_data/0]).
 
 -type create_data() ::
         stripe_client:post_customers_request_body().
+
+-type update_data() ::
+        stripe_client:post_customers_customer_request_body().
 
 -spec create(create_data(), stripe:client_options()) ->
         stripe:result(stripe_model:customer()).
@@ -27,6 +30,22 @@ create(Data, ClientOptions) ->
   ReqOptions = #{body => {<<"application/x-www-form-urlencoded">>, Data}},
   ClientOptions2 = stripe_utils:client_options(ClientOptions),
   case stripe_client:post_customers(ReqOptions, ClientOptions2) of
+    {ok, Customer, #{status := S}} when
+        S >= 200, S < 300 ->
+      {ok, Customer};
+    {ok, #{error := Error}, _} ->
+      {error, {api_error, Error}};
+    {error, Error} ->
+      {error, {client_error, Error}}
+  end.
+
+-spec update(binary(), update_data(), stripe:client_options()) ->
+        stripe:result(stripe_model:customer()).
+update(Id, Data, ClientOptions) ->
+  ReqOptions = #{customer => Id,
+                 body => {<<"application/x-www-form-urlencoded">>, Data}},
+  ClientOptions2 = stripe_utils:client_options(ClientOptions),
+  case stripe_client:post_customers_customer(ReqOptions, ClientOptions2) of
     {ok, Customer, #{status := S}} when
         S >= 200, S < 300 ->
       {ok, Customer};

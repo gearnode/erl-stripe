@@ -57,8 +57,7 @@ get(Id, ClientOptions) ->
   ReqOptions = #{path => #{session => Id}},
   ClientOptions2 = stripe_utils:client_options(ClientOptions),
   case
-    stripe_client:post_checkout_sessions_session_expire(ReqOptions,
-                                                        ClientOptions2)
+    stripe_client:get_checkout_sessions_session(ReqOptions, ClientOptions2)
   of
     {ok, Session, #{status := S}} when S >= 200, S < 300 ->
       {ok, Session};

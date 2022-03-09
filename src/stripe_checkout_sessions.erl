@@ -14,7 +14,7 @@
 
 -module(stripe_checkout_sessions).
 
--export([create/2, expire/2]).
+-export([create/2, expire/2, get/2]).
 
 -export_type([create_data/0]).
 
@@ -27,8 +27,7 @@ create(Data, ClientOptions) ->
   ReqOptions = #{body => {<<"application/x-www-form-urlencoded">>, Data}},
   ClientOptions2 = stripe_utils:client_options(ClientOptions),
   case stripe_client:post_checkout_sessions(ReqOptions, ClientOptions2) of
-    {ok, Session, #{status := S}} when
-        S >= 200, S < 300 ->
+    {ok, Session, #{status := S}} when S >= 200, S < 300 ->
       {ok, Session};
     {ok, #{error := Error}, _} ->
       {error, {api_error, Error}};
@@ -46,6 +45,22 @@ expire(Id, ClientOptions) ->
   of
     {ok, _, #{status := S}} when S >= 200, S < 300 ->
       ok;
+    {ok, #{error := Error}, _} ->
+      {error, {api_error, Error}};
+    {error, Error} ->
+      {error, {client_error, Error}}
+  end.
+
+-spec get(binary(), stripe:client_options()) -> stripe:result().
+get(Id, ClientOptions) ->
+  ReqOptions = #{path => #{session => Id}},
+  ClientOptions2 = stripe_utils:client_options(ClientOptions),
+  case
+    stripe_client:post_checkout_sessions_session_expire(ReqOptions,
+                                                        ClientOptions2)
+  of
+    {ok, Session, #{status := S}} when S >= 200, S < 300 ->
+      {ok, Session};
     {ok, #{error := Error}, _} ->
       {error, {api_error, Error}};
     {error, Error} ->

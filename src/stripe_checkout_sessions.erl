@@ -51,7 +51,8 @@ expire(Id, ClientOptions) ->
       {error, {client_error, Error}}
   end.
 
--spec get(binary(), stripe:client_options()) -> stripe:result().
+-spec get(binary(), stripe:client_options()) ->
+        stripe:result(stripe_model:checkout_session()).
 get(Id, ClientOptions) ->
   ReqOptions = #{path => #{session => Id}},
   ClientOptions2 = stripe_utils:client_options(ClientOptions),

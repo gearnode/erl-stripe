@@ -61,7 +61,7 @@ decode_event_object(Event = #{data := #{object := Object}}) ->
       decode_event_object(Object, {ref, stripe, card});
     {ok, <<"charge">>} ->
       decode_event_object(Object, {ref, stripe, charge});
-    {ok, <<"checkout_session">>} ->
+    {ok, <<"checkout.session">>} ->
       decode_event_object(Object, {ref, stripe, checkout_session});
     {ok, <<"coupon">>} ->
       decode_event_object(Object, {ref, stripe, coupon});

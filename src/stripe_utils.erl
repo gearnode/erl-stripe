@@ -26,6 +26,9 @@ client_options(Options) ->
           %% Provide your API key as the basic auth username value. You do not
           %% need to provide a password."
           Header2 = mhttp_header:add_basic_authorization(Header, Key, <<>>),
+          ClientOptions#{header => Header2};
+        (idempotency_key, Key, ClientOptions = #{header := Header}) ->
+          Header2 = mhttp_header:add(Header, <<"Idempotency-Key">>, Key),
           ClientOptions#{header => Header2}
       end,
   ClientOptions0 =

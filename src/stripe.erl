@@ -20,7 +20,8 @@
 
 -type client_options() ::
         #{mhttp_pool => mhttp:pool_id(),
-          api_key => binary()}.
+          api_key => binary(),
+          idempotency_key => binary()}.
 
 -type result() :: ok | {error, error_reason()}.
 -type result(Result) :: {ok, Result} | {error, error_reason()}.

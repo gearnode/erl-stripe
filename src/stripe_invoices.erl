@@ -14,10 +14,15 @@
 
 -module(stripe_invoices).
 
--export([get_all/2]).
+-export([get_all/2, send/3]).
+
+-export_type([get_all_options/0, send_data/0]).
 
 -type get_all_options() ::
         stripe_client:get_invoices_request_query().
+
+-type send_data() ::
+        stripe_client:post_invoices_invoice_send_request_body().
 
 -spec get_all(get_all_options(), stripe:client_options()) ->
         stripe:result([stripe_model:invoice()]).
@@ -40,6 +45,21 @@ get_all(Options, ClientOptions, Acc) ->
         false ->
           {ok, lists:flatten(lists:reverse(Acc2))}
       end;
+    {ok, #{error := Error}, _} ->
+      {error, {api_error, Error}};
+    {error, Error} ->
+      {error, {client_error, Error}}
+  end.
+
+-spec send(binary(), send_data(), stripe:client_options()) ->
+        stripe:result(stripe_model:invoice()).
+send(InvoiceId, Data, ClientOptions) ->
+  ReqOptions = #{path => #{invoice => InvoiceId},
+                 body => {<<"application/x-www-form-urlencoded">>, Data}},
+  ClientOptions2 = stripe_utils:client_options(ClientOptions),
+  case stripe_client:post_invoices_invoice_send(ReqOptions, ClientOptions2) of
+    {ok, Invoice, #{status := S}} when S >= 200, S < 300 ->
+      {ok, Invoice};
     {ok, #{error := Error}, _} ->
       {error, {api_error, Error}};
     {error, Error} ->
